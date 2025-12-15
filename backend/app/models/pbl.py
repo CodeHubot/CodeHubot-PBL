@@ -343,6 +343,33 @@ class PBLClassTeacher(Base):
     updated_at = Column(DateTime, default=get_beijing_time_naive, onupdate=get_beijing_time_naive, nullable=False)
 
 
+class PBLCourseTeacher(Base):
+    """课程教师关联表（多对多关系）"""
+    __tablename__ = "pbl_course_teachers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(BigInteger, ForeignKey("pbl_courses.id"), nullable=False)
+    teacher_id = Column(Integer, nullable=False)  # Foreign Key to core_users
+    subject = Column(String(50))  # 教师在该课程教授的科目
+    is_primary = Column(Integer, default=0)  # 是否为主讲教师
+    created_at = Column(DateTime, default=get_beijing_time_naive, nullable=False)
+    updated_at = Column(DateTime, default=get_beijing_time_naive, onupdate=get_beijing_time_naive, nullable=False)
+
+
+class ChannelSchoolRelation(Base):
+    """渠道商与学校关联表"""
+    __tablename__ = "pbl_channel_school_relations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    channel_partner_id = Column(Integer, nullable=False)  # Foreign Key to core_users (role='channel_partner')
+    school_id = Column(Integer, nullable=False)  # Foreign Key to core_schools
+    assigned_at = Column(DateTime, default=get_beijing_time_naive)
+    is_active = Column(Integer, default=1)
+    remarks = Column(String(500))
+    created_at = Column(DateTime, default=get_beijing_time_naive, nullable=False)
+    updated_at = Column(DateTime, default=get_beijing_time_naive, onupdate=get_beijing_time_naive, nullable=False)
+
+
 class PBLClassCourse(Base):
     """班级课程分配表"""
     __tablename__ = "pbl_class_courses"

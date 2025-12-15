@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 import time
 
-from app.api.endpoints import projects, admin_auth, admin_courses, admin_units, admin_resources, student_courses, student_auth, admin_tasks, student_tasks, admin_users, classes_groups, learning_progress, assessments, assessment_templates, datasets, ethics, experts, social_activities, admin_outputs, portfolios, school_courses, schools, video_play, video_progress, club_classes, student_club, template_permissions, available_templates, class_analytics
+from app.api.endpoints import projects, admin_auth, admin_courses, admin_units, admin_resources, student_courses, student_auth, admin_tasks, student_tasks, admin_users, classes_groups, learning_progress, assessments, assessment_templates, datasets, ethics, experts, social_activities, admin_outputs, portfolios, school_courses, schools, video_play, video_progress, club_classes, student_club, template_permissions, available_templates, class_analytics, teacher_auth, teacher_courses, channel_auth, channel_schools
 from app.core.response import error_response
 from app.core.logging_config import setup_logging, get_logger
 from app.db.session import engine
@@ -106,6 +106,14 @@ app.include_router(portfolios.router, prefix="/api/v1/pbl", tags=["pbl-portfolio
 # Video play router (accessible by both students and admins)
 app.include_router(video_play.router, prefix="/api/v1/video", tags=["video-play"])
 app.include_router(video_progress.router, prefix="/api/v1/video/progress", tags=["video-progress"])
+
+# Teacher portal routers
+app.include_router(teacher_auth.router, prefix="/api/v1/teacher/auth", tags=["teacher-auth"])
+app.include_router(teacher_courses.router, prefix="/api/v1/teacher", tags=["teacher-courses"])
+
+# Channel partner portal routers
+app.include_router(channel_auth.router, prefix="/api/v1/channel/auth", tags=["channel-auth"])
+app.include_router(channel_schools.router, prefix="/api/v1/channel", tags=["channel-schools"])
 
 logger.info("所有路由注册完成")
 

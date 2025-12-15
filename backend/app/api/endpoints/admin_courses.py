@@ -75,7 +75,7 @@ def create_course(
 @router.get("/templates")
 def get_course_templates(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=1000),
     search: Optional[str] = Query(None, description="搜索关键词（标题或编码）"),
     category: Optional[str] = None,
     is_public: Optional[int] = None,

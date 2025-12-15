@@ -11,6 +11,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/admin/auth/login")
 # 学生用户认证
 oauth2_scheme_user = OAuth2PasswordBearer(tokenUrl="/api/v1/student/auth/login")
 
+# 教师端认证
+oauth2_scheme_teacher = OAuth2PasswordBearer(tokenUrl="/api/v1/teacher/auth/login")
+
+# 渠道商端认证
+oauth2_scheme_channel = OAuth2PasswordBearer(tokenUrl="/api/v1/channel/auth/login")
+
 def get_db():
     """数据库依赖"""
     db = SessionLocal()
@@ -87,6 +93,86 @@ def get_current_user(token: str = Depends(oauth2_scheme_user), db: Session = Dep
         )
     
     return user
+
+def get_current_teacher(token: str = Depends(oauth2_scheme_teacher), db: Session = Depends(get_db)):
+    """获取当前教师用户（仅限教师端登录的教师）"""
+    from ..models.admin import Admin
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="无效的认证凭据",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        # 验证token
+        payload = verify_token(token, token_type="access")
+        teacher_id: Optional[int] = payload.get("sub")
+        portal: Optional[str] = payload.get("portal")
+        
+        # 检查是否是教师端token
+        if teacher_id is None or portal != "teacher":
+            raise credentials_exception
+            
+    except HTTPException:
+        raise
+    
+    # 查询教师用户
+    teacher = db.query(Admin).filter(
+        Admin.id == int(teacher_id),
+        Admin.role == 'teacher'
+    ).first()
+    
+    if teacher is None:
+        raise credentials_exception
+    
+    if not teacher.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="账户已被禁用"
+        )
+    
+    return teacher
+
+def get_current_channel_partner(token: str = Depends(oauth2_scheme_channel), db: Session = Depends(get_db)):
+    """获取当前渠道商用户（仅限渠道商端登录的渠道商）"""
+    from ..models.admin import Admin
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="无效的认证凭据",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        # 验证token
+        payload = verify_token(token, token_type="access")
+        channel_id: Optional[int] = payload.get("sub")
+        portal: Optional[str] = payload.get("portal")
+        
+        # 检查是否是渠道商端token
+        if channel_id is None or portal != "channel":
+            raise credentials_exception
+            
+    except HTTPException:
+        raise
+    
+    # 查询渠道商用户
+    channel_partner = db.query(Admin).filter(
+        Admin.id == int(channel_id),
+        Admin.role == 'channel_partner'
+    ).first()
+    
+    if channel_partner is None:
+        raise credentials_exception
+    
+    if not channel_partner.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="账户已被禁用"
+        )
+    
+    return channel_partner
 
 def get_current_user_flexible(
     token: Optional[str] = Depends(oauth2_scheme_user),

@@ -344,13 +344,33 @@ const loadPermissions = async () => {
 // 加载所有模板
 const loadTemplates = async () => {
   try {
-    const response = await axios.get('/api/v1/admin/courses/templates', {
-      headers: getAuthHeaders()
-    })
+    const allItems = []
+    let page = 1
+    const pageSize = 100
+    let hasMore = true
     
-    if (response.data && response.data.success) {
-      allTemplates.value = response.data.data || []
+    // 循环加载所有页
+    while (hasMore) {
+      const response = await axios.get('/api/v1/admin/courses/templates', {
+        params: { page, page_size: pageSize },
+        headers: getAuthHeaders()
+      })
+      
+      if (response.data && response.data.success) {
+        const data = response.data.data
+        const items = data.items || []
+        allItems.push(...items)
+        
+        // 检查是否还有更多数据
+        const total = data.total || 0
+        hasMore = allItems.length < total
+        page++
+      } else {
+        hasMore = false
+      }
     }
+    
+    allTemplates.value = allItems
   } catch (error) {
     console.error('加载模板列表失败:', error)
   }

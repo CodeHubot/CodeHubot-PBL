@@ -115,27 +115,26 @@ WHERE c.uuid = 'be921ec1-d4e4-11f0-a641-0242ac140002';
 
 -- 2.2 将已选课的学生添加为班级成员（如果还不是）
 -- 注意：保留角色为普通成员，后续可手动调整
--- 修复：避免触发器冲突，分两步执行
+-- 修复：使用临时表避免触发器冲突（MySQL #1442错误）
+-- 原因：直接从 pbl_course_enrollments SELECT 插入 pbl_class_members 时，
+--       如果有触发器操作 pbl_course_enrollments 表会导致冲突
 
 -- 2.2.1 先获取目标班级ID
 SET @target_class_id = (SELECT id FROM pbl_classes WHERE uuid = 'ff7e2094-5e57-4137-b277-4382822b4349');
 
--- 2.2.2 插入班级成员
-INSERT INTO pbl_class_members (
-    class_id,
-    student_id,
-    role,
-    joined_at,
-    is_active,
-    created_at
-)
+-- 2.2.2 创建临时表存储待添加的班级成员（避免触发器冲突 #1442）
+DROP TEMPORARY TABLE IF EXISTS temp_students_to_add;
+CREATE TEMPORARY TABLE temp_students_to_add (
+    student_id BIGINT,
+    enrolled_at DATETIME,
+    INDEX idx_student (student_id)
+) ENGINE=MEMORY;
+
+-- 2.2.3 将待添加的学生数据插入临时表
+INSERT INTO temp_students_to_add (student_id, enrolled_at)
 SELECT 
-    @target_class_id AS class_id,
     e.user_id AS student_id,
-    'member' AS role,
-    e.enrolled_at AS joined_at,  -- 使用选课时间作为加入班级时间
-    1 AS is_active,
-    NOW() AS created_at
+    e.enrolled_at
 FROM pbl_course_enrollments e
 INNER JOIN pbl_courses c ON e.course_id = c.id
 WHERE c.uuid = 'be921ec1-d4e4-11f0-a641-0242ac140002'
@@ -148,6 +147,27 @@ WHERE c.uuid = 'be921ec1-d4e4-11f0-a641-0242ac140002'
         AND cm.student_id = e.user_id
         AND cm.is_active = 1
   );
+
+-- 2.2.4 从临时表插入班级成员（此时不会触发 #1442 错误）
+INSERT INTO pbl_class_members (
+    class_id,
+    student_id,
+    role,
+    joined_at,
+    is_active,
+    created_at
+)
+SELECT 
+    @target_class_id AS class_id,
+    t.student_id,
+    'member' AS role,
+    t.enrolled_at AS joined_at,  -- 使用选课时间作为加入班级时间
+    1 AS is_active,
+    NOW() AS created_at
+FROM temp_students_to_add t;
+
+-- 2.2.5 清理临时表
+DROP TEMPORARY TABLE IF EXISTS temp_students_to_add;
 
 -- 验证步骤2结果
 SELECT 

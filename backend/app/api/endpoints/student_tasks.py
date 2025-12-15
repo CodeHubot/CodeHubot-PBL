@@ -268,7 +268,7 @@ def get_my_tasks(
     if status_filter:
         query = query.filter(PBLTaskProgress.status == status_filter)
     
-    progress_list = query.order_by(PBLTaskProgress.updated_at.desc()).all()
+    progress_list = query.all()
     
     result = []
     for progress in progress_list:
@@ -287,9 +287,11 @@ def get_my_tasks(
                         'task_type': task.type,
                         'task_difficulty': task.difficulty,
                         'estimated_time': task.estimated_time,
+                        'task_order': task.order,
                         'unit_id': unit.id,
                         'unit_uuid': unit.uuid,
                         'unit_title': unit.title,
+                        'unit_order': unit.order,
                         'course_id': course.id,
                         'course_uuid': course.uuid,
                         'course_title': course.title,
@@ -301,5 +303,8 @@ def get_my_tasks(
                         'submitted_at': progress.updated_at.isoformat() if progress.updated_at else None,
                         'graded_at': progress.graded_at.isoformat() if progress.graded_at else None
                     })
+    
+    # 按照课程ID、单元倒序、任务顺序排序
+    result.sort(key=lambda x: (x['course_id'], -x['unit_order'], x['task_order']))
     
     return success_response(data=result)

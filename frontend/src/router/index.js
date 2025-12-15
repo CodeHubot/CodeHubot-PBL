@@ -487,6 +487,172 @@ const routes = [
     ]
   },
   {
+    path: '/teacher/login',
+    name: 'TeacherLogin',
+    component: () => import('../views/teacher/TeacherLogin.vue'),
+    meta: {
+      title: '教师登录 - PBL系统教师端',
+      requiresAuth: false
+    }
+  },
+  {
+    path: '/teacher',
+    component: () => import('../views/teacher/TeacherLayout.vue'),
+    redirect: '/teacher/dashboard',
+    meta: {
+      requiresTeacherAuth: true
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'TeacherDashboard',
+        component: () => import('../views/teacher/TeacherDashboard.vue'),
+        meta: {
+          title: '工作台 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses',
+        name: 'TeacherCourses',
+        component: () => import('../views/teacher/TeacherCourses.vue'),
+        meta: {
+          title: '我的班级 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid',
+        name: 'TeacherCourseDetail',
+        component: () => import('../views/teacher/TeacherCourseDetail.vue'),
+        meta: {
+          title: '课程详情 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/members',
+        name: 'TeacherMembers',
+        component: () => import('../views/teacher/TeacherMembers.vue'),
+        meta: {
+          title: '班级成员 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/groups',
+        name: 'TeacherGroups',
+        component: () => import('../views/teacher/TeacherGroups.vue'),
+        meta: {
+          title: '分组管理 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/progress',
+        name: 'TeacherProgressUnits',
+        component: () => import('../views/teacher/TeacherProgressUnits.vue'),
+        meta: {
+          title: '学习进度 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/progress/units/:unitId',
+        name: 'TeacherProgressUnitDetail',
+        component: () => import('../views/teacher/TeacherProgressUnitDetail.vue'),
+        meta: {
+          title: '单元学习进度 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/homework',
+        name: 'TeacherHomeworkUnits',
+        component: () => import('../views/teacher/TeacherHomeworkUnits.vue'),
+        meta: {
+          title: '作业管理 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'courses/:uuid/homework/units/:unitId',
+        name: 'TeacherHomeworkUnitDetail',
+        component: () => import('../views/teacher/TeacherHomeworkUnitDetail.vue'),
+        meta: {
+          title: '单元作业管理 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'profile',
+        name: 'TeacherProfile',
+        component: () => import('../views/teacher/TeacherProfile.vue'),
+        meta: {
+          title: '个人信息 - PBL系统教师端'
+        }
+      },
+      {
+        path: 'change-password',
+        name: 'TeacherChangePassword',
+        component: () => import('../views/teacher/TeacherChangePassword.vue'),
+        meta: {
+          title: '修改密码 - PBL系统教师端'
+        }
+      }
+    ]
+  },
+  {
+    path: '/channel/login',
+    name: 'ChannelLogin',
+    component: () => import('../views/channel/ChannelLogin.vue'),
+    meta: {
+      title: '渠道商登录 - PBL系统渠道商端',
+      requiresAuth: false
+    }
+  },
+  {
+    path: '/channel',
+    component: () => import('../views/channel/ChannelLayout.vue'),
+    redirect: '/channel/dashboard',
+    meta: {
+      requiresChannelAuth: true
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'ChannelDashboard',
+        component: () => import('../views/channel/ChannelDashboard.vue'),
+        meta: {
+          title: '工作台 - PBL系统渠道商端'
+        }
+      },
+      {
+        path: 'schools',
+        name: 'ChannelSchools',
+        component: () => import('../views/channel/ChannelSchools.vue'),
+        meta: {
+          title: '学校管理 - PBL系统渠道商端'
+        }
+      },
+      {
+        path: 'schools/:id',
+        name: 'ChannelSchoolDetail',
+        component: () => import('../views/channel/ChannelSchoolDetail.vue'),
+        meta: {
+          title: '学校详情 - PBL系统渠道商端'
+        }
+      },
+      {
+        path: 'schools/:id/courses',
+        name: 'ChannelSchoolCourses',
+        component: () => import('../views/channel/ChannelSchoolCourses.vue'),
+        meta: {
+          title: '课程列表 - PBL系统渠道商端'
+        }
+      },
+      {
+        path: 'courses/:uuid',
+        name: 'ChannelCourseView',
+        component: () => import('../views/channel/ChannelCourseView.vue'),
+        meta: {
+          title: '课程详情 - PBL系统渠道商端'
+        }
+      }
+    ]
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/'
   }
@@ -512,6 +678,60 @@ router.beforeEach(async (to, from, next) => {
       document.title = to.meta.title
     } else {
       document.title = '跨学科项目式学习平台'
+    }
+    
+    // 渠道商端路由检查
+    if (to.meta.requiresChannelAuth) {
+      const channelToken = localStorage.getItem('channel_access_token')
+      const isChannelTokenValid = channelToken && !isTokenExpired(channelToken)
+      
+      if (!isChannelTokenValid) {
+        localStorage.removeItem('channel_access_token')
+        localStorage.removeItem('channel_refresh_token')
+        localStorage.removeItem('channel_info')
+        next('/channel/login')
+        return
+      }
+      
+      next()
+      return
+    }
+    
+    // 如果已登录渠道商端且访问渠道商登录页，跳转到渠道商工作台
+    if (to.name === 'ChannelLogin') {
+      const channelToken = localStorage.getItem('channel_access_token')
+      const isChannelTokenValid = channelToken && !isTokenExpired(channelToken)
+      if (isChannelTokenValid) {
+        next('/channel')
+        return
+      }
+    }
+    
+    // 教师端路由检查
+    if (to.meta.requiresTeacherAuth) {
+      const teacherToken = localStorage.getItem('teacher_access_token')
+      const isTeacherTokenValid = teacherToken && !isTokenExpired(teacherToken)
+      
+      if (!isTeacherTokenValid) {
+        localStorage.removeItem('teacher_access_token')
+        localStorage.removeItem('teacher_refresh_token')
+        localStorage.removeItem('teacher_info')
+        next('/teacher/login')
+        return
+      }
+      
+      next()
+      return
+    }
+    
+    // 如果已登录教师端且访问教师登录页，跳转到教师工作台
+    if (to.name === 'TeacherLogin') {
+      const teacherToken = localStorage.getItem('teacher_access_token')
+      const isTeacherTokenValid = teacherToken && !isTokenExpired(teacherToken)
+      if (isTeacherTokenValid) {
+        next('/teacher')
+        return
+      }
     }
     
     // 管理员路由检查

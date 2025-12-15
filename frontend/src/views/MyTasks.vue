@@ -10,15 +10,14 @@
       v-loading="loading"
       stripe
       style="width: 100%"
-      :default-sort="{ prop: 'submitted_at', order: 'descending' }"
     >
       <el-table-column prop="course_title" label="课程" width="180" show-overflow-tooltip />
       
-      <el-table-column prop="unit_title" label="单元" width="180" show-overflow-tooltip />
+      <el-table-column prop="unit_title" label="单元" width="180" show-overflow-tooltip sortable />
       
       <el-table-column prop="task_title" label="任务名称" min-width="200" show-overflow-tooltip />
       
-      <el-table-column prop="submitted_at" label="提交时间" width="180" sortable>
+      <el-table-column prop="submitted_at" label="最后提交时间" width="180" sortable>
         <template #default="{ row }">
           <span v-if="row.submitted_at">{{ formatDateTime(row.submitted_at) }}</span>
           <span v-else class="text-muted">-</span>

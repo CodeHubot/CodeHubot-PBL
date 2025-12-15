@@ -201,7 +201,15 @@ SELECT
     COUNT(*) AS count,
     CONCAT(ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM pbl_learning_records), 2), '%') AS percentage
 FROM pbl_learning_records
-GROUP BY progress_range
+GROUP BY 
+    CASE 
+        WHEN progress = 0 THEN '0% (未开始)'
+        WHEN progress > 0 AND progress < 30 THEN '1-29% (刚开始)'
+        WHEN progress >= 30 AND progress < 60 THEN '30-59% (进行中)'
+        WHEN progress >= 60 AND progress < 100 THEN '60-99% (接近完成)'
+        WHEN progress = 100 THEN '100% (已完成)'
+        ELSE '其他'
+    END
 ORDER BY 
     CASE 
         WHEN progress = 0 THEN 1

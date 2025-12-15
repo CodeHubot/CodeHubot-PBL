@@ -17,26 +17,6 @@
             <el-breadcrumb-item>{{ currentUnit.title }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        <div class="unit-navigation">
-          <el-button-group>
-            <el-button 
-              v-if="previousUnit" 
-              @click="goToUnit(previousUnit.uuid || previousUnit.id)"
-              :icon="ArrowLeft"
-              size="small"
-            >
-              上一节
-            </el-button>
-            <el-button 
-              v-if="nextUnit" 
-              @click="goToUnit(nextUnit.uuid || nextUnit.id)"
-              size="small"
-            >
-              下一节
-              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-            </el-button>
-          </el-button-group>
-        </div>
       </div>
     </nav>
 
@@ -107,7 +87,6 @@
               :key="unit.id"
               class="outline-item"
               :class="{ 'active': unit.id === currentUnit.id }"
-              @click="switchUnit(unit)"
             >
               <div class="outline-status">
                  <el-icon v-if="unit.id === currentUnit.id"><VideoPlay /></el-icon>
@@ -115,12 +94,6 @@
               </div>
               <div class="outline-info">
                 <div class="outline-title">{{ unit.title }}</div>
-                <div class="outline-meta">
-                  <span v-if="unit.duration">{{ unit.duration }} | </span>
-                  <span :class="{'status-completed': unit.status === 'completed', 'status-progress': unit.status !== 'completed'}">
-                    {{ unit.status === 'completed' ? '已完成' : (unit.id === currentUnit.id ? '学习中' : '未开始') }}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
@@ -585,15 +558,10 @@ const progressPercentage = computed(() => {
   return Math.round((completedSteps.value / learningPath.value.length) * 100)
 })
 
-// 方法
+// 方法（课程目录不再支持点击跳转）
 const switchUnit = (unit) => {
-  // 如果是当前单元，不做操作
-  if (unit.id === currentUnit.value.id) return
-  
-  // 切换单元，优先使用uuid
-  const identifier = unit.uuid || unit.id
-  router.push(`/unit/${identifier}`)
-  ElMessage.success(`切换到: ${unit.title}`)
+  // 课程目录仅用于展示，不支持跳转
+  return
 }
 
 const getStepTypeName = (type) => {
@@ -654,24 +622,17 @@ const checkAllStepsCompleted = async () => {
         unitInList.status = 'completed'
       }
       
-      // 如果有下一个单元，自动跳转
-      if (nextUnit.value) {
-        setTimeout(() => {
-          ElMessageBox.confirm(
-            '当前单元已完成，是否前往下一单元学习？',
-            '单元完成',
-            {
-              confirmButtonText: '前往下一单元',
-              cancelButtonText: '留在当前页面',
-              type: 'success'
-            }
-          ).then(() => {
-            goToUnit(nextUnit.value.uuid || nextUnit.value.id)
-          }).catch(() => {
-            // 用户选择留在当前页面
-          })
-        }, 1500)
-      }
+      // 单元完成提示（不跳转）
+      setTimeout(() => {
+        ElMessageBox.alert(
+          '您已完成本单元的所有学习内容，可以继续复习或返回课程列表。',
+          '单元学习完成',
+          {
+            confirmButtonText: '确定',
+            type: 'success'
+          }
+        )
+      }, 1500)
     } catch (error) {
       console.error('记录单元完成状态失败:', error)
       // 不影响用户体验，静默失败
@@ -1110,13 +1071,8 @@ onMounted(async () => {
 .outline-item {
   display: flex;
   padding: 16px;
-  cursor: pointer;
   transition: all 0.2s;
   border-bottom: 1px solid #f1f5f9;
-}
-
-.outline-item:hover {
-  background: #f8fafc;
 }
 
 .outline-item.active {
@@ -1151,21 +1107,6 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 500;
   color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.outline-meta {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.status-completed {
-  color: #10b981;
-  font-weight: 500;
-}
-
-.status-progress {
-  color: #3b82f6;
 }
 
 /* 学习路径样式 */
